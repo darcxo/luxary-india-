@@ -1,0 +1,9 @@
+# LuxRide India — Python Requirements
+# Built with Flask (pre-installed) + Python built-ins only
+# No extra pip installs needed!
+
+Flask==3.1.2
+Werkzeug==3.1.5
+
+# Optional for enhanced AI (already via ANTHROPIC_API_KEY env var):
+# anthropic  # if you want to pip install instead of API key env var

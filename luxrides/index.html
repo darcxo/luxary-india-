@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LuxRide India — Premium Ground Travel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8C97E;--gold-dark:#8B6914;--black:#050508;--dark:#0D0D14;--dark2:#13131E;--dark3:#1A1A2A;--surface:#1E1E2E;--text:#F0EDE6;--text-muted:#8A8AAA;--green:#4ADE80;--red:#EF4444}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--black);color:var(--text);overflow-x:hidden;cursor:none}
+.cursor{width:10px;height:10px;background:var(--gold);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .1s}
+.cursor-ring{width:32px;height:32px;border:1px solid rgba(201,168,76,.5);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .12s ease}
+body::-webkit-scrollbar{width:3px}
+body::-webkit-scrollbar-thumb{background:var(--gold-dark)}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(5,5,8,.95);border-bottom:1px solid rgba(201,168,76,.12);backdrop-filter:blur(8px)}
+.logo{font-family:'Bebas Neue';font-size:30px;letter-spacing:4px;color:var(--gold);text-decoration:none}
+.logo span{color:var(--text)}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;transition:color .3s}
+.nav-links a:hover{color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--green);letter-spacing:1px;text-transform:uppercase}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.btn-ghost{padding:8px 20px;background:transparent;border:1px solid rgba(201,168,76,.4);color:var(--gold);font-family:'DM Sans';font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:none;transition:all .3s}
+.btn-ghost:hover{background:var(--gold);color:var(--black)}
+.btn-fill{padding:8px 20px;background:var(--gold);border:1px solid var(--gold);color:var(--black);font-family:'DM Sans';font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:none;transition:all .3s}
+.btn-fill:hover{background:var(--gold-light)}
+/* User menu */
+.user-menu{position:relative}
+.user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:none;border:2px solid var(--gold)}
+.user-dropdown{position:absolute;right:0;top:48px;background:var(--dark2);border:1px solid rgba(201,168,76,.2);width:200px;display:none;z-index:600}
+.user-dropdown.open{display:block}
+.user-dropdown a,.user-dropdown button{display:block;width:100%;padding:11px 16px;font-size:12px;color:var(--text-muted);text-decoration:none;font-family:'DM Sans';background:none;border:none;text-align:left;cursor:none;transition:all .2s;letter-spacing:.5px}
+.user-dropdown a:hover,.user-dropdown button:hover{background:rgba(201,168,76,.1);color:var(--gold)}
+.user-dropdown hr{border:none;border-top:1px solid rgba(201,168,76,.1);margin:4px 0}
+.user-name-nav{font-size:11px;color:var(--gold);padding:10px 16px 6px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid rgba(201,168,76,.1)}
+
+/* ── UPDATE STRIP ── */
+.update-strip{position:fixed;top:57px;left:0;right:0;z-index:490;background:rgba(201,168,76,.06);border-bottom:1px solid rgba(201,168,76,.12);padding:7px 0;overflow:hidden}
+.strip-inner{display:flex;gap:60px;animation:ticker 35s linear infinite;white-space:nowrap}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.strip-item{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.strip-item em{color:var(--gold);font-style:normal;font-weight:600}
+
+/* ── HERO ── */
+#hero{min-height:100vh;position:relative;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding:140px 48px 80px}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 70% 50%,rgba(201,168,76,.07) 0%,transparent 60%),radial-gradient(ellipse 50% 80% at 15% 80%,rgba(201,168,76,.05) 0%,transparent 50%),linear-gradient(135deg,#050508 0%,#0D0D18 50%,#050508 100%)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(201,168,76,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.04) 1px,transparent 1px);background-size:80px 80px;animation:gridmove 20s linear infinite}
+@keyframes gridmove{0%{transform:translateY(0)}100%{transform:translateY(80px)}}
+.hero-content{position:relative;z-index:2;max-width:720px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);padding:5px 14px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:28px;animation:fadeUp .8s ease both}
+h1.hero-h{font-family:'Cormorant Garamond';font-size:clamp(48px,7vw,96px);font-weight:300;line-height:.95;margin-bottom:24px;animation:fadeUp .8s .1s ease both}
+h1.hero-h em{font-style:italic;color:var(--gold)}
+.hero-sub{font-size:15px;color:var(--text-muted);line-height:1.7;max-width:480px;margin-bottom:40px;animation:fadeUp .8s .2s ease both;font-weight:300}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;animation:fadeUp .8s .3s ease both}
+.btn-primary{padding:15px 38px;background:var(--gold);color:var(--black);font-family:'DM Sans';font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;cursor:none;transition:all .3s}
+.btn-primary:hover{background:var(--gold-light);transform:translateY(-2px)}
+.btn-secondary{padding:15px 38px;background:transparent;color:var(--text);font-family:'DM Sans';font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;border:1px solid rgba(240,237,230,.2);cursor:none;transition:all .3s}
+.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
+.hero-stats{display:flex;gap:48px;margin-top:64px;padding-top:36px;border-top:1px solid rgba(201,168,76,.15);animation:fadeUp .8s .4s ease both;flex-wrap:wrap}
+.stat-n{font-family:'Cormorant Garamond';font-size:44px;font-weight:600;color:var(--gold);line-height:1;display:block}
+.stat-l{font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOOKING CARD ── */
+#booking{padding:0 48px 60px;position:relative;z-index:10}
+.bcard{background:var(--dark2);border:1px solid rgba(201,168,76,.2);padding:36px;box-shadow:0 40px 80px rgba(0,0,0,.6);position:relative;overflow:hidden}
+.bcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.btabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid rgba(201,168,76,.1)}
+.btab{padding:10px 22px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);cursor:none;border-bottom:2px solid transparent;transition:all .3s;background:none;border-left:none;border-right:none;border-top:none;font-family:'DM Sans'}
+.btab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.bform{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:14px;align-items:end}
+.fg{display:flex;flex-direction:column;gap:7px;position:relative}
+.fg label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
+.fg input,.fg select{background:var(--dark3);border:1px solid rgba(201,168,76,.15);color:var(--text);padding:12px 14px;font-family:'DM Sans';font-size:13px;outline:none;transition:border-color .3s;cursor:none;-webkit-appearance:none;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--gold)}
+.fg select option{background:var(--dark2)}
+.sugg-box{position:absolute;top:100%;left:0;right:0;background:var(--dark2);border:1px solid rgba(201,168,76,.2);z-index:200;display:none;max-height:180px;overflow-y:auto}
+.sugg-box.open{display:block}
+.sugg-item{padding:9px 13px;font-size:12px;color:var(--text);cursor:none;transition:background .2s}
+.sugg-item:hover{background:rgba(201,168,76,.1);color:var(--gold)}
+.btn-search{padding:12px 32px;background:var(--gold);color:var(--black);font-family:'DM Sans';font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:none;cursor:none;transition:all .3s;height:49px;white-space:nowrap}
+.btn-search:hover{background:var(--gold-light)}
+
+/* ── SECTIONS ── */
+.section{padding:70px 48px}
+.sec-tag{display:block;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:12px}
+.sec-title{font-family:'Cormorant Garamond';font-size:clamp(34px,4vw,58px);font-weight:300;color:var(--text);line-height:1.1;text-align:center;margin-bottom:48px}
+.sec-title em{font-style:italic;color:var(--gold)}
+
+/* ── AI ── */
+#ai-section{background:var(--dark)}
+.ai-wrap{display:grid;grid-template-columns:1fr 1fr;gap:36px;max-width:1200px;margin:0 auto}
+.chat-panel{background:var(--dark2);border:1px solid rgba(201,168,76,.15);display:flex;flex-direction:column;height:520px;position:relative;overflow:hidden}
+.chat-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.chat-head{padding:18px 22px;border-bottom:1px solid rgba(201,168,76,.1);display:flex;align-items:center;gap:12px}
+.ai-av{width:38px;height:38px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px}
+.chat-head h4{font-size:13px;font-weight:600}
+.chat-head p{font-size:10px;color:var(--green);display:flex;align-items:center;gap:3px}
+.msgs{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.msgs::-webkit-scrollbar{width:2px}
+.msgs::-webkit-scrollbar-thumb{background:var(--gold-dark)}
+.msg{max-width:85%;padding:10px 14px;font-size:13px;line-height:1.6;animation:msgIn .3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.ai{background:var(--dark3);border-left:2px solid var(--gold);color:var(--text);align-self:flex-start}
+.msg.user{background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.2);color:var(--text);align-self:flex-end}
+.typing{display:flex;align-items:center;gap:4px;padding:10px 14px;background:var(--dark3);border-left:2px solid var(--gold);width:60px;align-self:flex-start}
+.typing span{width:5px;height:5px;background:var(--gold);border-radius:50%;animation:typ 1s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes typ{0%,80%,100%{transform:scale(.8);opacity:.4}40%{transform:scale(1);opacity:1}}
+.chat-in{padding:14px 20px;border-top:1px solid rgba(201,168,76,.1);display:flex;gap:10px}
+.chat-in input{flex:1;background:var(--dark3);border:1px solid rgba(201,168,76,.15);color:var(--text);padding:11px 14px;font-family:'DM Sans';font-size:13px;outline:none}
+.chat-in input:focus{border-color:var(--gold)}
+.chat-in input::placeholder{color:var(--text-muted)}
+.btn-send{padding:11px 18px;background:var(--gold);color:var(--black);border:none;font-family:'DM Sans';font-size:12px;font-weight:700;cursor:none;transition:all .3s}
+.btn-send:hover{background:var(--gold-light)}
+.ai-feats{display:flex;flex-direction:column;gap:16px}
+.ai-feat{background:var(--dark2);border:1px solid rgba(201,168,76,.1);padding:20px;transition:all .3s;position:relative}
+.ai-feat:hover{border-color:rgba(201,168,76,.3);transform:translateX(4px)}
+.ai-feat-icon{font-size:26px;margin-bottom:10px}
+.ai-feat-title{font-family:'Cormorant Garamond';font-size:19px;font-weight:600;margin-bottom:6px}
+.ai-feat-desc{font-size:12px;color:var(--text-muted);line-height:1.6}
+
+/* ── MAP ── */
+#map-section{background:var(--black)}
+.map-wrap{display:grid;grid-template-columns:340px 1fr;border:1px solid rgba(201,168,76,.2);height:580px;overflow:hidden}
+.map-panel{background:var(--dark2);padding:28px;overflow-y:auto;border-right:1px solid rgba(201,168,76,.15);display:flex;flex-direction:column;gap:16px}
+.map-panel::-webkit-scrollbar{width:2px}
+.map-panel h3{font-family:'Cormorant Garamond';font-size:22px;font-weight:600;margin-bottom:2px}
+.map-panel p{font-size:12px;color:var(--text-muted);margin-bottom:8px}
+.map-in label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:6px}
+.map-in input,.map-in select{width:100%;background:var(--dark3);border:1px solid rgba(201,168,76,.15);color:var(--text);padding:11px 13px;font-family:'DM Sans';font-size:13px;outline:none;-webkit-appearance:none}
+.map-in input:focus,.map-in select:focus{border-color:var(--gold)}
+.fare-box{background:var(--dark3);border:1px solid rgba(201,168,76,.15);padding:16px;display:none}
+.fare-box.show{display:block}
+.f-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.f-row:last-child{border:none}
+.f-lbl{color:var(--text-muted)}
+.f-val{color:var(--gold);font-weight:600}
+#livemap{height:100%;z-index:1}
+.leaflet-tile{filter:brightness(.55) saturate(.6) hue-rotate(185deg)}
+.leaflet-container{background:#0A0A12!important}
+
+/* ── FLEET ── */
+#fleet{background:var(--dark)}
+.fleet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px;max-width:1400px;margin:0 auto}
+.vcard{background:var(--dark2);border:1px solid rgba(201,168,76,.1);overflow:hidden;transition:all .4s;position:relative;cursor:none}
+.vcard:hover{border-color:rgba(201,168,76,.4);transform:translateY(-7px);box-shadow:0 24px 48px rgba(0,0,0,.5),0 0 24px rgba(201,168,76,.08)}
+.vbadge{position:absolute;top:14px;right:14px;background:var(--gold);color:var(--black);font-size:9px;font-weight:700;padding:3px 8px;letter-spacing:1px;text-transform:uppercase;z-index:2}
+.vthumb{height:160px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:72px;position:relative}
+.vthumb::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,var(--dark2) 0%,transparent 60%)}
+.vinfo{padding:20px}
+.vcat{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.vname{font-family:'Cormorant Garamond';font-size:21px;font-weight:600;margin-bottom:4px}
+.vdesc{font-size:11px;color:var(--text-muted);margin-bottom:14px;line-height:1.5}
+.vspecs{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.vspec{font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:3px}
+.vprice{display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid rgba(201,168,76,.1)}
+.pfrom{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+.pval{font-family:'Cormorant Garamond';font-size:26px;font-weight:600;color:var(--gold)}
+.punit{font-size:10px;color:var(--text-muted)}
+.btn-bk{padding:9px 18px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'DM Sans';font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:none;transition:all .3s}
+.btn-bk:hover{background:var(--gold);color:var(--black)}
+
+/* ── ADS ── */
+#ads-section{background:var(--black);padding:0 48px 60px}
+.ads-ticker{background:var(--gold);padding:12px 0;overflow:hidden}
+.tick-in{display:flex;gap:60px;animation:ticker 28s linear infinite;white-space:nowrap}
+.tick-i{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--black);display:flex;align-items:center;gap:10px}
+.ads-grid{display:grid;grid-template-columns:2fr 1fr;gap:22px;margin-top:28px}
+.ad-card{background:var(--dark2);border:1px solid rgba(201,168,76,.15);padding:32px;position:relative}
+.ad-card.main{background:linear-gradient(135deg,#1A1A0A,#0D0D08);border-color:rgba(201,168,76,.3)}
+.ad-tag{font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
+.ad-head{font-family:'Cormorant Garamond';font-size:36px;font-weight:600;line-height:1.1;margin-bottom:10px}
+.ad-head em{color:var(--gold);font-style:italic}
+.ad-desc{font-size:12px;color:var(--text-muted);margin-bottom:20px;line-height:1.6}
+.ad-code{display:inline-block;background:var(--gold);color:var(--black);font-weight:700;font-size:13px;letter-spacing:2px;padding:4px 10px;margin-bottom:18px}
+.ad-stack{display:flex;flex-direction:column;gap:14px}
+.ad-sm{background:var(--dark2);border:1px solid rgba(201,168,76,.1);padding:20px;flex:1}
+.ad-sm-icon{font-size:28px;margin-bottom:10px}
+.ad-sm-title{font-family:'Cormorant Garamond';font-size:20px;font-weight:600;margin-bottom:5px}
+.ad-sm-desc{font-size:11px;color:var(--text-muted);line-height:1.5}
+
+/* ── NEWS ── */
+#news-section{background:var(--dark)}
+.news-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1400px;margin:0 auto}
+.ncard{background:var(--dark2);border:1px solid rgba(201,168,76,.1);overflow:hidden;transition:all .3s;cursor:none}
+.ncard:hover{border-color:rgba(201,168,76,.3);transform:translateY(-4px)}
+.ndate{padding:13px 18px;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);border-bottom:1px solid rgba(201,168,76,.08);display:flex;align-items:center;gap:6px}
+.nbody{padding:20px}
+.ncat{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);background:rgba(201,168,76,.1);display:inline-block;padding:2px 8px;margin-bottom:10px}
+.ntitle{font-family:'Cormorant Garamond';font-size:20px;font-weight:600;line-height:1.3;margin-bottom:8px}
+.nexcerpt{font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:16px}
+.nread{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold);text-decoration:none}
+.nread:hover{color:var(--gold-light)}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:800;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(5px)}
+.overlay.show{display:flex}
+.modal{background:var(--dark2);border:1px solid rgba(201,168,76,.25);max-width:560px;width:100%;max-height:92vh;overflow-y:auto;position:relative;animation:mIn .3s ease}
+.modal::-webkit-scrollbar{width:2px}
+.modal::-webkit-scrollbar-thumb{background:var(--gold-dark)}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.mhead{padding:24px 28px;border-bottom:1px solid rgba(201,168,76,.1);display:flex;justify-content:space-between;align-items:center}
+.mtitle{font-family:'Cormorant Garamond';font-size:26px;font-weight:600}
+.mclose{width:34px;height:34px;background:none;border:1px solid rgba(201,168,76,.2);color:var(--text);font-size:16px;cursor:none;transition:all .3s;display:flex;align-items:center;justify-content:center}
+.mclose:hover{border-color:var(--gold);color:var(--gold)}
+.mbody{padding:28px}
+.mi{width:100%;background:var(--dark3);border:1px solid rgba(201,168,76,.15);color:var(--text);padding:12px 14px;font-family:'DM Sans';font-size:13px;outline:none;transition:border-color .3s;margin-bottom:12px}
+.mi:focus{border-color:var(--gold)}
+.mi::placeholder{color:var(--text-muted)}
+.ml{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:5px}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px}
+.merr{color:var(--red);font-size:12px;margin-bottom:10px;display:none}
+.merr.show{display:block}
+.msep{display:flex;align-items:center;gap:12px;margin:16px 0}
+.msep::before,.msep::after{content:'';flex:1;height:1px;background:rgba(201,168,76,.1)}
+.msep span{font-size:11px;color:var(--text-muted);letter-spacing:1px}
+.mfoot{padding:20px 28px;border-top:1px solid rgba(201,168,76,.1);display:flex;justify-content:space-between;align-items:center}
+.mtotal{font-family:'Cormorant Garamond';font-size:26px;color:var(--gold)}
+.mtotal small{font-size:11px;color:var(--text-muted);font-family:'DM Sans';display:block}
+.step-label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,.1);margin-bottom:14px}
+.booking-sum{background:var(--dark3);border:1px solid rgba(201,168,76,.1);padding:16px;margin-bottom:20px;display:flex;gap:14px;align-items:center}
+.booking-sum h4{font-family:'Cormorant Garamond';font-size:19px;font-weight:600}
+.booking-sum p{font-size:11px;color:var(--text-muted)}
+.coupon-row{display:flex;gap:8px;margin-bottom:12px}
+.coupon-row input{flex:1}
+.coupon-row button{padding:12px 18px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'DM Sans';font-size:11px;font-weight:600;cursor:none;white-space:nowrap;transition:all .3s}
+.coupon-row button:hover{background:var(--gold);color:var(--black)}
+.coupon-msg{font-size:12px;margin-bottom:8px;display:none}
+.coupon-msg.ok{color:var(--green);display:block}
+.coupon-msg.fail{color:var(--red);display:block}
+
+/* ── DASHBOARD ── */
+#dashboard-section{background:var(--dark);padding:70px 48px}
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:36px}
+.dstat{background:var(--dark2);border:1px solid rgba(201,168,76,.12);padding:22px;position:relative}
+.dstat-val{font-family:'Cormorant Garamond';font-size:36px;color:var(--gold);font-weight:600}
+.dstat-label{font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase}
+.bookings-table{background:var(--dark2);border:1px solid rgba(201,168,76,.12);overflow:hidden}
+.bt-head{padding:16px 20px;border-bottom:1px solid rgba(201,168,76,.1);display:flex;justify-content:space-between;align-items:center}
+.bt-head h3{font-family:'Cormorant Garamond';font-size:20px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--gold);padding:12px 16px;text-align:left;border-bottom:1px solid rgba(201,168,76,.1)}
+td{font-size:12px;color:var(--text-muted);padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04)}
+tr:last-child td{border:none}
+tr:hover td{background:rgba(201,168,76,.04);color:var(--text)}
+.status-badge{display:inline-block;padding:3px 9px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.status-confirmed{background:rgba(74,222,128,.1);color:var(--green)}
+.status-pending{background:rgba(201,168,76,.1);color:var(--gold)}
+.status-cancelled{background:rgba(239,68,68,.1);color:var(--red)}
+.status-completed{background:rgba(99,102,241,.1);color:#818cf8}
+.empty-state{padding:48px;text-align:center;color:var(--text-muted);font-size:13px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--dark2);border:1px solid rgba(201,168,76,.3);padding:14px 20px;z-index:9000;display:none;align-items:center;gap:10px;max-width:340px;animation:slideR .3s ease;box-shadow:0 20px 40px rgba(0,0,0,.4)}
+.toast.show{display:flex}
+@keyframes slideR{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+.t-icon{font-size:18px}
+.t-msg{font-size:12px;line-height:1.5}
+.t-msg strong{color:var(--gold);display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+
+/* ── FOOTER ── */
+footer{background:var(--black);border-top:1px solid rgba(201,168,76,.12);padding:56px 48px 32px}
+.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:52px;margin-bottom:40px}
+.fbrand p{font-size:12px;color:var(--text-muted);line-height:1.7;max-width:260px;margin-top:12px}
+.fcol h5{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.flinks{list-style:none;display:flex;flex-direction:column;gap:9px}
+.flinks a{font-size:12px;color:var(--text-muted);text-decoration:none;transition:color .3s}
+.flinks a:hover{color:var(--text)}
+.fbot{padding-top:28px;border-top:1px solid rgba(201,168,76,.08);display:flex;justify-content:space-between;align-items:center}
+.fbot p{font-size:11px;color:var(--text-muted)}
+.slinks{display:flex;gap:10px}
+.slink{width:34px;height:34px;border:1px solid rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;transition:all .3s;cursor:none}
+.slink:hover{border-color:var(--gold);background:rgba(201,168,76,.1)}
+
+/* Loading */
+.spinner{width:20px;height:20px;border:2px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-btn{opacity:.7;pointer-events:none}
+
+@media(max-width:1024px){
+  nav{padding:14px 20px}
+  .nav-links{display:none}
+  .section,#hero,#booking,#ads-section,#dashboard-section,footer{padding-left:20px;padding-right:20px}
+  .bform{grid-template-columns:1fr 1fr}
+  .ai-wrap{grid-template-columns:1fr}
+  .map-wrap{grid-template-columns:1fr;height:auto}
+  #livemap{height:380px}
+  .news-grid{grid-template-columns:1fr 1fr}
+  .fgrid{grid-template-columns:1fr 1fr;gap:28px}
+  .ads-grid{grid-template-columns:1fr}
+  .dash-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Cursors -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="ring"></div>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="#" class="logo">Lux<span>Ride</span></a>
+  <ul class="nav-links">
+    <li><a href="#booking">Book</a></li>
+    <li><a href="#fleet">Fleet</a></li>
+    <li><a href="#map-section">Live Map</a></li>
+    <li><a href="#ai-section">AI Concierge</a></li>
+    <li><a href="#news-section">Updates</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="live-badge"><div class="live-dot"></div>Live Tracking</div>
+    <div id="navGuest">
+      <button class="btn-ghost" onclick="showAuth('login')">Login</button>
+      <button class="btn-fill" style="margin-left:8px" onclick="showAuth('register')">Register</button>
+    </div>
+    <div id="navUser" style="display:none" class="user-menu">
+      <div class="user-avatar" id="userAvatar" onclick="toggleUserMenu()">👤</div>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="user-name-nav" id="userNameNav">—</div>
+        <a href="#dashboard-section" onclick="closeUserMenu();loadDashboard()">📊 My Dashboard</a>
+        <a href="#booking" onclick="closeUserMenu()">🚗 New Booking</a>
+        <hr>
+        <button onclick="logout()">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Update Strip -->
+<div class="update-strip">
+  <div class="strip-inner" id="stripInner">
+    <div class="strip-item">🚘 <em>NEW:</em> Business Class SUV in 28 cities</div>
+    <div class="strip-item">💰 <em>OFFER:</em> 20% off first outstation — LUXRIDE20</div>
+    <div class="strip-item">🏔️ <em>EXPANSION:</em> Leh-Ladakh routes now live</div>
+    <div class="strip-item">⭐ <em>AWARD:</em> #1 Premium Travel Platform India 2026</div>
+    <div class="strip-item">🎯 <em>LAUNCH:</em> Remote Rental now available pan-India</div>
+    <div class="strip-item">🚘 <em>NEW:</em> Business Class SUV in 28 cities</div>
+    <div class="strip-item">💰 <em>OFFER:</em> 20% off first outstation — LUXRIDE20</div>
+    <div class="strip-item">🏔️ <em>EXPANSION:</em> Leh-Ladakh routes now live</div>
+    <div class="strip-item">⭐ <em>AWARD:</em> #1 Premium Travel Platform India 2026</div>
+    <div class="strip-item">🎯 <em>LAUNCH:</em> Remote Rental now available pan-India</div>
+  </div>
+</div>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-bg"></div><div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">🏆 India's #1 Premium Ground Travel Service</div>
+    <h1 class="hero-h">Travel in <em>Pure Luxury</em> Across India</h1>
+    <p class="hero-sub">Book premium sedans, XUVs, shuttles, and coaches for intercity travel. AI-powered routing, real-time tracking, white-glove service — everywhere in India.</p>
+    <div class="hero-ctas">
+      <button class="btn-primary" onclick="scrollTo('#booking')">Book Your Ride ↓</button>
+      <button class="btn-secondary" onclick="scrollTo('#fleet')">Explore Fleet →</button>
+    </div>
+    <div class="hero-stats">
+      <div><span class="stat-n">500<sup style="font-size:.4em">+</sup></span><span class="stat-l">Cities Covered</span></div>
+      <div><span class="stat-n">12K<sup style="font-size:.4em">+</sup></span><span class="stat-l">Premium Vehicles</span></div>
+      <div><span class="stat-n">4.9★</span><span class="stat-l">Average Rating</span></div>
+      <div><span class="stat-n">2.8M<sup style="font-size:.4em">+</sup></span><span class="stat-l">Happy Riders</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BOOKING ── -->
+<section id="booking" style="padding:0 48px 60px">
+  <div class="bcard">
+    <div class="btabs">
+      <button class="btab active" onclick="setTab(this)">One Way</button>
+      <button class="btab" onclick="setTab(this)">Round Trip</button>
+      <button class="btab" onclick="setTab(this)">Hourly Rental</button>
+      <button class="btab" onclick="setTab(this)">Remote Rental</button>
+    </div>
+    <div class="bform">
+      <div class="fg">
+        <label>📍 Pickup City</label>
+        <input type="text" id="bPickup" placeholder="e.g. Mumbai" autocomplete="off" oninput="citySearch(this,'bPickupSugg')">
+        <div class="sugg-box" id="bPickupSugg"></div>
+      </div>
+      <div class="fg">
+        <label>🏁 Drop City</label>
+        <input type="text" id="bDrop" placeholder="e.g. Pune" autocomplete="off" oninput="citySearch(this,'bDropSugg')">
+        <div class="sugg-box" id="bDropSugg"></div>
+      </div>
+      <div class="fg">
+        <label>📅 Travel Date & Time</label>
+        <input type="datetime-local" id="bDate">
+      </div>
+      <div class="fg">
+        <label>🚗 Vehicle Category</label>
+        <select id="bVehicle"><option value="">Select vehicle...</option></select>
+      </div>
+      <button class="btn-search" onclick="searchRide()">Search →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── AI CONCIERGE ── -->
+<section id="ai-section" class="section">
+  <span class="sec-tag">✦ Artificial Intelligence</span>
+  <h2 class="sec-title">Meet Your <em>AI Travel</em> Concierge</h2>
+  <div class="ai-wrap">
+    <div class="chat-panel">
+      <div class="chat-head">
+        <div class="ai-av">🤖</div>
+        <div>
+          <h4>Aria — LuxRide AI</h4>
+          <p><span class="live-dot" style="width:5px;height:5px"></span>Online & Ready</p>
+        </div>
+      </div>
+      <div class="msgs" id="chatMsgs">
+        <div class="msg ai">Namaste! 🙏 I'm Aria, your LuxRide AI concierge. I can help plan routes, suggest vehicles, estimate fares, and answer travel questions across India. What's your journey today?</div>
+      </div>
+      <div class="chat-in">
+        <input type="text" id="chatInp" placeholder="Ask about routes, fares, vehicles..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn-send" onclick="sendChat()">Send →</button>
+      </div>
+    </div>
+    <div class="ai-feats">
+      <div class="ai-feat"><div class="ai-feat-icon">🗺️</div><div class="ai-feat-title">Smart Route Intelligence</div><div class="ai-feat-desc">AI analyzes real-time traffic and road conditions to suggest the fastest, safest routes including remote hill stations and coastal drives.</div></div>
+      <div class="ai-feat"><div class="ai-feat-icon">💰</div><div class="ai-feat-title">Dynamic Fare Prediction</div><div class="ai-feat-desc">ML model predicts fare variations based on demand and season — transparent pricing with zero surprise charges.</div></div>
+      <div class="ai-feat"><div class="ai-feat-icon">🚗</div><div class="ai-feat-title">Vehicle Recommendation Engine</div><div class="ai-feat-desc">Tell Aria your group size and preferences — AI instantly matches you with the ideal vehicle for your journey.</div></div>
+      <div class="ai-feat"><div class="ai-feat-icon">📱</div><div class="ai-feat-title">Real-Time Driver Tracking</div><div class="ai-feat-desc">Live GPS tracking with ETA updates, driver SOS, and emergency support — all powered by our safety intelligence platform.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MAP & FARE ── -->
+<section id="map-section" class="section" style="background:var(--black)">
+  <span class="sec-tag">✦ Live Map & Calculator</span>
+  <h2 class="sec-title">Real-Time <em>Route Planner</em></h2>
+  <div class="map-wrap">
+    <div class="map-panel">
+      <div>
+        <h3>Fare Calculator</h3>
+        <p>Enter cities to get live distance & fare estimate</p>
+      </div>
+      <div class="map-in">
+        <label>📍 From City</label>
+        <input type="text" id="cFrom" placeholder="e.g. Delhi" autocomplete="off" oninput="citySearch(this,'cFromSugg')">
+        <div class="sugg-box" id="cFromSugg"></div>
+      </div>
+      <div class="map-in" style="position:relative">
+        <label>🏁 To City</label>
+        <input type="text" id="cTo" placeholder="e.g. Agra" autocomplete="off" oninput="citySearch(this,'cToSugg')">
+        <div class="sugg-box" id="cToSugg"></div>
+      </div>
+      <div class="map-in">
+        <label>🚗 Vehicle</label>
+        <select id="cVehicle" style="width:100%"><option value="">Loading...</option></select>
+      </div>
+      <button class="btn-primary" style="width:100%;text-align:center" onclick="calcFare()">Calculate Route & Fare →</button>
+      <div class="fare-box" id="fareBox">
+        <div class="f-row"><span class="f-lbl">📏 Road Distance</span><span class="f-val" id="fDist">—</span></div>
+        <div class="f-row"><span class="f-lbl">⏱️ Duration (est.)</span><span class="f-val" id="fDur">—</span></div>
+        <div class="f-row"><span class="f-lbl">🚗 Vehicle</span><span class="f-val" id="fVeh">—</span></div>
+        <div class="f-row"><span class="f-lbl">💰 Base Fare</span><span class="f-val" id="fBase">—</span></div>
+        <div class="f-row"><span class="f-lbl">🛣️ Tolls</span><span class="f-val" id="fToll">—</span></div>
+        <div class="f-row" style="border-top:1px solid rgba(201,168,76,.2);padding-top:10px;margin-top:4px">
+          <span class="f-lbl" style="font-weight:700;color:var(--text)">Total Estimate</span>
+          <span class="f-val" style="font-size:16px" id="fTotal">—</span>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:14px;text-align:center" onclick="bookFromCalc()">Book This Ride →</button>
+      </div>
+    </div>
+    <div id="livemap"></div>
+  </div>
+</section>
+
+<!-- ── FLEET ── -->
+<section id="fleet" class="section">
+  <span class="sec-tag">✦ Our Premium Fleet</span>
+  <h2 class="sec-title">Every <em>Journey</em>, A Different Experience</h2>
+  <div class="fleet-grid" id="fleetGrid">
+    <div class="empty-state"><div class="spinner"></div> Loading fleet...</div>
+  </div>
+</section>
+
+<!-- ── ADS ── -->
+<section id="ads-section">
+  <div class="ads-ticker">
+    <div class="tick-in">
+      <div class="tick-i">🔥 FLAT 20% OFF OUTSTATION ✦</div>
+      <div class="tick-i">🏔️ NEW: LEH-LADAKH ROUTES LIVE ✦</div>
+      <div class="tick-i">💎 CORPORATE PLANS AVAILABLE ✦</div>
+      <div class="tick-i">🎊 WEDDING SEASON: FLEET BOOKING OPEN ✦</div>
+      <div class="tick-i">🔥 FLAT 20% OFF OUTSTATION ✦</div>
+      <div class="tick-i">🏔️ NEW: LEH-LADAKH ROUTES LIVE ✦</div>
+      <div class="tick-i">💎 CORPORATE PLANS AVAILABLE ✦</div>
+      <div class="tick-i">🎊 WEDDING SEASON: FLEET BOOKING OPEN ✦</div>
+    </div>
+  </div>
+  <div class="ads-grid">
+    <div class="ad-card main">
+      <div class="ad-tag">✦ LIMITED TIME OFFER</div>
+      <div class="ad-head">First Ride,<br><em>First Class.</em></div>
+      <div class="ad-desc">New to LuxRide? Enjoy 20% off your first outstation booking across India. Valid on all vehicle categories.</div>
+      <div class="ad-code">LUXRIDE20</div>
+      <button class="btn-primary" onclick="showAuth('register')">Claim Offer →</button>
+    </div>
+    <div class="ad-stack">
+      <div class="ad-sm">
+        <div class="ad-sm-icon">🏔️</div>
+        <div class="ad-sm-title">Mountain Routes</div>
+        <div class="ad-sm-desc">Specially equipped vehicles for Leh-Ladakh, Spiti, Himalayas. Experienced high-altitude drivers with full safety gear.</div>
+        <button class="btn-bk" style="margin-top:12px" onclick="showToast('⛰️','Mountain route enquiry sent!')">Enquire Now</button>
+      </div>
+      <div class="ad-sm">
+        <div class="ad-sm-icon">💼</div>
+        <div class="ad-sm-title">Corporate Travel</div>
+        <div class="ad-sm-desc">Dedicated fleet for businesses. Monthly billing, GST invoices, and a dedicated account manager.</div>
+        <button class="btn-bk" style="margin-top:12px" onclick="showToast('💼','Corporate enquiry sent! Team will reach you soon.')">Get Quote</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── NEWS ── -->
+<section id="news-section" class="section">
+  <span class="sec-tag">✦ Latest Updates</span>
+  <h2 class="sec-title">News & <em>Announcements</em></h2>
+  <div class="news-grid" id="newsGrid">
+    <div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div> Loading news...</div>
+  </div>
+</section>
+
+<!-- ── DASHBOARD (shown when logged in) ── -->
+<section id="dashboard-section" class="section" style="display:none">
+  <span class="sec-tag">✦ My Account</span>
+  <h2 class="sec-title">Your <em>Dashboard</em></h2>
+  <div class="dash-grid">
+    <div class="dstat"><div class="dstat-val" id="dTotalBookings">0</div><div class="dstat-label">Total Bookings</div></div>
+    <div class="dstat"><div class="dstat-val" id="dActiveBookings">0</div><div class="dstat-label">Active Journeys</div></div>
+    <div class="dstat"><div class="dstat-val" id="dSpend">₹0</div><div class="dstat-label">Total Spend</div></div>
+    <div class="dstat"><div class="dstat-val" id="dWallet">₹0</div><div class="dstat-label">Wallet Balance</div></div>
+  </div>
+  <div class="bookings-table">
+    <div class="bt-head">
+      <h3>My Bookings</h3>
+      <button class="btn-ghost" onclick="loadDashboard()">↻ Refresh</button>
+    </div>
+    <div id="bookingsTableWrap">
+      <div class="empty-state">No bookings yet. Book your first luxury ride!</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="fgrid">
+    <div class="fbrand">
+      <a href="#" class="logo">Lux<span>Ride</span></a>
+      <p>India's premier luxury ground travel platform. Connecting you to the finest vehicles across 500+ cities.</p>
+      <div style="margin-top:16px;font-size:12px;color:var(--text-muted);line-height:1.8">
+        📞 1800-LUXRIDE (Toll Free)<br>✉️ support@luxride.in<br>📍 Mumbai · Delhi · Bengaluru
+      </div>
+    </div>
+    <div class="fcol">
+      <h5>Services</h5>
+      <ul class="flinks">
+        <li><a href="#">Outstation Booking</a></li>
+        <li><a href="#">Hourly Rental</a></li>
+        <li><a href="#">Remote Rental</a></li>
+        <li><a href="#">Corporate Travel</a></li>
+        <li><a href="#">Wedding Fleet</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h5>Company</h5>
+      <ul class="flinks">
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Our Fleet</a></li>
+        <li><a href="#">Driver Partners</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Blog</a></li>
+      </ul>
+    </div>
+    <div class="fcol">
+      <h5>Support</h5>
+      <ul class="flinks">
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Safety Guidelines</a></li>
+        <li><a href="#">Cancellation Policy</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Refund Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="fbot">
+    <p>© 2026 LuxRide India Pvt. Ltd. | CIN: U60221MH2024PTC000001</p>
+    <div class="slinks">
+      <a href="#" class="slink">𝕏</a>
+      <a href="#" class="slink">in</a>
+      <a href="#" class="slink">f</a>
+      <a href="#" class="slink">▶</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ── AUTH MODAL ── -->
+<div class="overlay" id="authOverlay" onclick="if(event.target===this)closeAuth()">
+  <div class="modal" style="max-width:440px">
+    <div class="mhead">
+      <div class="mtitle" id="authTitle">Login</div>
+      <button class="mclose" onclick="closeAuth()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="merr" id="authErr"></div>
+
+      <!-- Login -->
+      <div id="loginForm">
+        <label class="ml">Email Address</label>
+        <input class="mi" type="email" id="loginEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+        <label class="ml">Password</label>
+        <input class="mi" type="password" id="loginPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="btn-primary" style="width:100%;text-align:center;margin-top:4px" id="loginBtn" onclick="doLogin()">Login →</button>
+        <div class="msep"><span>New to LuxRide?</span></div>
+        <button class="btn-ghost" style="width:100%;text-align:center" onclick="switchAuth('register')">Create Account →</button>
+      </div>
+
+      <!-- Register -->
+      <div id="registerForm" style="display:none">
+        <div class="mrow">
+          <div><label class="ml">Full Name</label><input class="mi" type="text" id="regName" placeholder="Your full name"></div>
+          <div><label class="ml">Phone</label><input class="mi" type="tel" id="regPhone" placeholder="+91 98765 43210"></div>
+        </div>
+        <label class="ml">Email Address</label>
+        <input class="mi" type="email" id="regEmail" placeholder="your@email.com">
+        <label class="ml">Password (min 8 chars)</label>
+        <input class="mi" type="password" id="regPw" placeholder="Create a strong password" onkeydown="if(event.key==='Enter')doRegister()">
+        <button class="btn-primary" style="width:100%;text-align:center;margin-top:4px" id="regBtn" onclick="doRegister()">Create Account →</button>
+        <div class="msep"><span>Already have an account?</span></div>
+        <button class="btn-ghost" style="width:100%;text-align:center" onclick="switchAuth('login')">Login →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── BOOKING MODAL ── -->
+<div class="overlay" id="bookOverlay" onclick="if(event.target===this)closeBookModal()">
+  <div class="modal">
+    <div class="mhead">
+      <div class="mtitle" id="bookTitle">Book Your Ride</div>
+      <button class="mclose" onclick="closeBookModal()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="booking-sum" id="bookSum">
+        <div id="bookVehicleIcon" style="font-size:42px">🚗</div>
+        <div>
+          <h4 id="bookVehicleName">Executive Sedan</h4>
+          <p id="bookVehicleDesc">Professional chauffeur • AC • WiFi</p>
+        </div>
+      </div>
+      <div class="step-label">Journey Details</div>
+      <div class="mrow">
+        <div><label class="ml">Pickup City</label><input class="mi" type="text" id="bkFrom" placeholder="From city"></div>
+        <div><label class="ml">Drop City</label><input class="mi" type="text" id="bkTo" placeholder="To city"></div>
+      </div>
+      <label class="ml">Pickup Address</label>
+      <input class="mi" type="text" id="bkAddress" placeholder="Full pickup address">
+      <div class="mrow">
+        <div><label class="ml">Travel Date & Time</label><input class="mi" type="datetime-local" id="bkDate"></div>
+        <div><label class="ml">Special Requests</label><input class="mi" type="text" id="bkReq" placeholder="Any requirements..."></div>
+      </div>
+      <div class="step-label" style="margin-top:4px">Coupon Code</div>
+      <div class="coupon-row">
+        <input class="mi" type="text" id="couponCode" placeholder="Enter coupon (e.g. LUXRIDE20)" style="margin-bottom:0;text-transform:uppercase">
+        <button onclick="applyCoupon()">Apply</button>
+      </div>
+      <div class="coupon-msg" id="couponMsg"></div>
+    </div>
+    <div class="mfoot">
+      <div class="mtotal"><small>Estimated Total</small><span id="bookTotal">₹ —</span></div>
+      <button class="btn-primary" id="confirmBtn" onclick="confirmBooking()">Confirm Booking →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="t-icon" id="tIcon">✅</div>
+  <div class="t-msg"><strong id="tTitle">LuxRide</strong><span id="tMsg">Done!</span></div>
+</div>
+
+<!-- ── SCRIPTS ── -->
+<script>
+const API = 'http://localhost:5000/api';
+let TOKEN = localStorage.getItem('lux_token') || '';
+let CURRENT_USER = JSON.parse(localStorage.getItem('lux_user') || 'null');
+let VEHICLES = [];
+let chatHistory = [];
+let chatSessionKey = 'sess_' + Math.random().toString(36).substr(2,8);
+let calcVehicleId = null;
+let bookingVehicleId = null;
+let discountAmount = 0;
+let routeLayer = null, mapMarkers = [];
+
+// ── CURSOR ──
+const cur = document.getElementById('cursor'), ring = document.getElementById('ring');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX+'px'; cur.style.top = e.clientY+'px';
+  setTimeout(() => { ring.style.left = e.clientX+'px'; ring.style.top = e.clientY+'px'; }, 60);
+});
+
+// ── API HELPER ──
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type':'application/json' } };
+  if (TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(API + path, opts);
+    return await r.json();
+  } catch(e) {
+    return { error: 'Cannot connect to server. Make sure the backend is running.' };
+  }
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(icon, msg, title='LuxRide') {
+  clearTimeout(toastTimer);
+  document.getElementById('tIcon').textContent = icon;
+  document.getElementById('tTitle').textContent = title;
+  document.getElementById('tMsg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ── SCROLL ──
+function scrollTo(sel) { document.querySelector(sel)?.scrollIntoView({behavior:'smooth'}); }
+
+// ── CITY SEARCH ──
+async function citySearch(inp, boxId) {
+  const q = inp.value.trim();
+  const box = document.getElementById(boxId);
+  if (q.length < 1) { box.classList.remove('open'); return; }
+  const res = await api('GET', '/cities?q=' + encodeURIComponent(q));
+  if (!res.data || res.data.length === 0) { box.classList.remove('open'); return; }
+  box.innerHTML = res.data.map(c =>
+    `<div class="sugg-item" onclick="selectCity('${c.name}','${inp.id}','${boxId}')">📍 ${c.name}</div>`
+  ).join('');
+  box.classList.add('open');
+}
+function selectCity(name, inpId, boxId) {
+  document.getElementById(inpId).value = name;
+  document.getElementById(boxId).classList.remove('open');
+}
+document.addEventListener('click', () => document.querySelectorAll('.sugg-box').forEach(b => b.classList.remove('open')));
+
+// ── LOAD VEHICLES ──
+async function loadVehicles() {
+  const res = await api('GET', '/vehicles');
+  if (!res.data) return;
+  VEHICLES = res.data;
+
+  // Fill booking select
+  const bSel = document.getElementById('bVehicle');
+  const cSel = document.getElementById('cVehicle');
+  bSel.innerHTML = '<option value="">Select vehicle...</option>' + VEHICLES.map(v =>
+    `<option value="${v.id}">${v.emoji} ${v.name} (₹${v.rate_per_km}/km)</option>`).join('');
+  cSel.innerHTML = VEHICLES.map(v =>
+    `<option value="${v.id}">${v.emoji} ${v.name} (₹${v.rate_per_km}/km)</option>`).join('');
+
+  // Render fleet
+  const grid = document.getElementById('fleetGrid');
+  grid.innerHTML = VEHICLES.map(v => {
+    const feats = (Array.isArray(v.features) ? v.features : []).map(f => `<div class="vspec">${f}</div>`).join('');
+    return `<div class="vcard">
+      ${v.badge ? `<div class="vbadge">${v.badge}</div>` : ''}
+      <div class="vthumb" style="background:linear-gradient(135deg,#13131E,#0D0D14)">${v.emoji}</div>
+      <div class="vinfo">
+        <div class="vcat">${v.category}</div>
+        <div class="vname">${v.name}</div>
+        <div class="vdesc">${v.description}</div>
+        <div class="vspecs">
+          <div class="vspec">👤 ${v.capacity} Pax</div>
+          <div class="vspec">💼 ${v.bags} Bags</div>
+          ${feats}
+        </div>
+        <div class="vprice">
+          <div>
+            <div class="pfrom">Starting from</div>
+            <div class="pval">₹${v.rate_per_km} <span class="punit">/km</span></div>
+          </div>
+          <button class="btn-bk" onclick="openBookModal(${v.id})">Book Now</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Scroll animation
+  document.querySelectorAll('.vcard,.ncard,.ai-feat').forEach(el => {
+    el.style.opacity='0'; el.style.transform='translateY(28px)'; el.style.transition='opacity .6s ease,transform .6s ease';
+    new IntersectionObserver(([e]) => { if(e.isIntersecting){ el.style.opacity='1'; el.style.transform='translateY(0)'; }},{threshold:.1}).observe(el);
+  });
+}
+
+// ── LOAD NEWS ──
+async function loadNews() {
+  const res = await api('GET', '/news');
+  if (!res.data) return;
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const grid = document.getElementById('newsGrid');
+  grid.innerHTML = res.data.map(n => {
+    const d = new Date(n.created_at);
+    const dateStr = `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    return `<div class="ncard">
+      <div class="ndate">🗓️ ${dateStr} ${n.badge ? `<span style="margin-left:auto;background:rgba(74,222,128,.1);color:var(--green);padding:2px 7px;font-size:9px">${n.badge}</span>`:''}</div>
+      <div class="nbody">
+        <div class="ncat">${n.category}</div>
+        <div class="ntitle">${n.title}</div>
+        <div class="nexcerpt">${n.excerpt}</div>
+        <a href="#" class="nread" onclick="showToast('📰','Opening article...');return false">Read More →</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MAP ──
+const map = L.map('livemap',{zoomControl:true,scrollWheelZoom:true}).setView([20.5937,78.9629],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+
+function clearMap() {
+  if(routeLayer){ map.removeLayer(routeLayer); routeLayer=null; }
+  mapMarkers.forEach(m => map.removeLayer(m)); mapMarkers=[];
+}
+
+const goldPin = (label) => L.divIcon({
+  html:`<div style="background:var(--gold);color:#000;font-weight:700;font-size:10px;padding:3px 8px;border-radius:1px;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5)">${label}</div>`,
+  iconAnchor:[40,16]
+});
+
+async function calcFare() {
+  const from = document.getElementById('cFrom').value.trim();
+  const to = document.getElementById('cTo').value.trim();
+  const vid = document.getElementById('cVehicle').value;
+  if(!from||!to){ showToast('⚠️','Please enter both cities'); return; }
+
+  const res = await api('POST','/fare/calculate',{from_city:from, to_city:to, vehicle_id: vid ? parseInt(vid) : null});
+  if(res.error){ showToast('❌', res.error); return; }
+  const d = res.data;
+
+  document.getElementById('fDist').textContent = d.road_km + ' km';
+  document.getElementById('fDur').textContent = d.duration_hrs + ' hrs';
+  document.getElementById('fVeh').textContent = d.vehicle.emoji + ' ' + d.vehicle.name;
+  document.getElementById('fBase').textContent = '₹' + d.fare_breakdown.base_fare.toLocaleString('en-IN');
+  document.getElementById('fToll').textContent = '₹' + d.fare_breakdown.toll_charge.toLocaleString('en-IN');
+  document.getElementById('fTotal').textContent = '₹' + d.fare_breakdown.total.toLocaleString('en-IN');
+  document.getElementById('fareBox').classList.add('show');
+
+  calcVehicleId = d.vehicle.id;
+  document.getElementById('bookTotal').textContent = '₹' + d.fare_breakdown.total.toLocaleString('en-IN');
+
+  clearMap();
+  const [lat1,lon1] = d.from_coords, [lat2,lon2] = d.to_coords;
+  mapMarkers.push(L.marker([lat1,lon1],{icon:goldPin('📍 '+d.from_city)}).addTo(map));
+  mapMarkers.push(L.marker([lat2,lon2],{icon:goldPin('🏁 '+d.to_city)}).addTo(map));
+  routeLayer = L.polyline([[lat1,lon1],[lat2,lon2]],{color:'#C9A84C',weight:3,opacity:.85,dashArray:'10 6'}).addTo(map);
+  map.fitBounds([[lat1,lon1],[lat2,lon2]],{padding:[50,50]});
+}
+
+function bookFromCalc() {
+  if(calcVehicleId) openBookModal(calcVehicleId);
+  else showToast('⚠️','Please calculate fare first');
+}
+
+// ── BOOKING ──
+async function searchRide() {
+  const pickup = document.getElementById('bPickup').value.trim();
+  const drop = document.getElementById('bDrop').value.trim();
+  const vid = document.getElementById('bVehicle').value;
+  if(!pickup||!drop){ showToast('⚠️','Enter pickup and drop cities'); return; }
+  if(!vid){ showToast('⚠️','Select a vehicle type'); return; }
+  openBookModal(parseInt(vid), pickup, drop);
+}
+
+function openBookModal(vid, fromCity='', toCity='') {
+  const v = VEHICLES.find(x => x.id === parseInt(vid));
+  if(!v){ showToast('❌','Vehicle not found'); return; }
+  bookingVehicleId = vid;
+  discountAmount = 0;
+  document.getElementById('bookTitle').textContent = 'Book — ' + v.name;
+  document.getElementById('bookVehicleIcon').textContent = v.emoji;
+  document.getElementById('bookVehicleName').textContent = v.name;
+  document.getElementById('bookVehicleDesc').textContent = `${v.category} • ${v.capacity} pax • ₹${v.rate_per_km}/km`;
+  document.getElementById('bkFrom').value = fromCity || document.getElementById('bPickup').value || '';
+  document.getElementById('bkTo').value = toCity || document.getElementById('bDrop').value || '';
+  document.getElementById('bkDate').value = document.getElementById('bDate').value || '';
+  document.getElementById('couponCode').value = '';
+  document.getElementById('couponMsg').className = 'coupon-msg';
+  document.getElementById('couponMsg').textContent = '';
+  document.getElementById('bookTotal').textContent = '₹ —';
+  document.getElementById('bookOverlay').classList.add('show');
+}
+function closeBookModal(){ document.getElementById('bookOverlay').classList.remove('show'); }
+
+async function applyCoupon() {
+  if(!TOKEN){ showToast('🔐','Login to apply coupons'); showAuth('login'); return; }
+  const code = document.getElementById('couponCode').value.trim().toUpperCase();
+  if(!code){ return; }
+  const res = await api('POST','/offers/validate',{code, amount:5000});
+  const msg = document.getElementById('couponMsg');
+  if(res.error){ msg.textContent='❌ '+res.error; msg.className='coupon-msg fail'; discountAmount=0; return; }
+  discountAmount = res.data.discount;
+  msg.textContent = `✅ Code applied! Saving ₹${discountAmount.toLocaleString('en-IN')}`;
+  msg.className='coupon-msg ok';
+}
+
+async function confirmBooking() {
+  if(!TOKEN){ closeBookModal(); showAuth('login'); return; }
+  const from = document.getElementById('bkFrom').value.trim();
+  const to = document.getElementById('bkTo').value.trim();
+  const date = document.getElementById('bkDate').value;
+  if(!from||!to||!date){ showToast('⚠️','Fill all required fields'); return; }
+
+  const btn = document.getElementById('confirmBtn');
+  btn.innerHTML='<span class="spinner"></span> Confirming...'; btn.classList.add('loading-btn');
+
+  const res = await api('POST','/bookings',{
+    pickup_city: from, drop_city: to, vehicle_id: bookingVehicleId,
+    travel_date: date, pickup_address: document.getElementById('bkAddress').value,
+    special_req: document.getElementById('bkReq').value,
+    coupon: document.getElementById('couponCode').value.trim()
+  });
+
+  btn.innerHTML='Confirm Booking →'; btn.classList.remove('loading-btn');
+
+  if(res.error){ showToast('❌', res.error); return; }
+  closeBookModal();
+  showToast('🎉', res.data.message);
+  loadDashboard();
+  scrollTo('#dashboard-section');
+}
+
+// ── AUTH ──
+function showAuth(mode) {
+  document.getElementById('authOverlay').classList.add('show');
+  switchAuth(mode);
+  document.getElementById('authErr').classList.remove('show');
+}
+function closeAuth(){ document.getElementById('authOverlay').classList.remove('show'); }
+function switchAuth(mode) {
+  const isLogin = mode==='login';
+  document.getElementById('authTitle').textContent = isLogin ? 'Login' : 'Create Account';
+  document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('authErr').classList.remove('show');
+}
+
+function setAuthErr(msg) {
+  const el = document.getElementById('authErr');
+  el.textContent = msg; el.classList.add('show');
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  if(!email||!pw){ setAuthErr('Email and password required'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML='<span class="spinner"></span> Logging in...'; btn.classList.add('loading-btn');
+  const res = await api('POST','/auth/login',{email, password:pw});
+  btn.innerHTML='Login →'; btn.classList.remove('loading-btn');
+  if(res.error){ setAuthErr(res.error); return; }
+  handleAuthSuccess(res.data);
+}
+
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pw = document.getElementById('regPw').value;
+  if(!name||!phone||!email||!pw){ setAuthErr('All fields are required'); return; }
+  const btn = document.getElementById('regBtn');
+  btn.innerHTML='<span class="spinner"></span> Creating account...'; btn.classList.add('loading-btn');
+  const res = await api('POST','/auth/register',{name, phone, email, password:pw});
+  btn.innerHTML='Create Account →'; btn.classList.remove('loading-btn');
+  if(res.error){ setAuthErr(res.error); return; }
+  handleAuthSuccess(res.data);
+}
+
+function handleAuthSuccess(data) {
+  TOKEN = data.token;
+  CURRENT_USER = data.user;
+  localStorage.setItem('lux_token', TOKEN);
+  localStorage.setItem('lux_user', JSON.stringify(CURRENT_USER));
+  closeAuth();
+  updateNavAuth();
+  showToast('👋', `Welcome, ${CURRENT_USER.name}!`);
+  loadDashboard();
+}
+
+async function logout() {
+  await api('POST','/auth/logout');
+  TOKEN=''; CURRENT_USER=null;
+  localStorage.removeItem('lux_token'); localStorage.removeItem('lux_user');
+  updateNavAuth();
+  document.getElementById('dashboard-section').style.display='none';
+  showToast('👋','Logged out successfully. Safe travels!');
+  closeUserMenu();
+}
+
+function updateNavAuth() {
+  const guest = document.getElementById('navGuest');
+  const user = document.getElementById('navUser');
+  const dash = document.getElementById('dashboard-section');
+  if(CURRENT_USER && TOKEN) {
+    guest.style.display='none'; user.style.display='block';
+    document.getElementById('userNameNav').textContent = CURRENT_USER.name;
+    document.getElementById('userAvatar').textContent = CURRENT_USER.name.charAt(0).toUpperCase();
+    dash.style.display='block';
+  } else {
+    guest.style.display='flex'; user.style.display='none';
+    dash.style.display='none';
+  }
+}
+
+function toggleUserMenu(){ document.getElementById('userDropdown').classList.toggle('open'); }
+function closeUserMenu(){ document.getElementById('userDropdown').classList.remove('open'); }
+document.addEventListener('click', e => { if(!e.target.closest('.user-menu')) closeUserMenu(); });
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  if(!TOKEN) return;
+  const res = await api('GET','/bookings');
+  if(res.error) return;
+  const bookings = res.data;
+
+  const total = bookings.length;
+  const active = bookings.filter(b => b.status==='confirmed').length;
+  const spend = bookings.filter(b=>b.status!=='cancelled').reduce((a,b)=>a+b.total_amount,0);
+  const wallet = CURRENT_USER?.wallet || 0;
+
+  document.getElementById('dTotalBookings').textContent = total;
+  document.getElementById('dActiveBookings').textContent = active;
+  document.getElementById('dSpend').textContent = '₹' + Math.round(spend).toLocaleString('en-IN');
+  document.getElementById('dWallet').textContent = '₹' + wallet.toFixed(0);
+
+  const wrap = document.getElementById('bookingsTableWrap');
+  if(bookings.length===0){
+    wrap.innerHTML='<div class="empty-state">No bookings yet. Book your first luxury ride! 🚗</div>';
+    return;
+  }
+
+  wrap.innerHTML=`<table>
+    <thead><tr>
+      <th>Booking Ref</th><th>Vehicle</th><th>Route</th>
+      <th>Date</th><th>Amount</th><th>Status</th><th>Action</th>
+    </tr></thead>
+    <tbody>
+      ${bookings.map(b=>`<tr>
+        <td style="color:var(--gold);font-weight:600">${b.booking_ref}</td>
+        <td>${b.emoji} ${b.vehicle_name}</td>
+        <td>${b.pickup_city} → ${b.drop_city}</td>
+        <td>${new Date(b.travel_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</td>
+        <td style="color:var(--gold);font-weight:600">₹${b.total_amount.toLocaleString('en-IN')}</td>
+        <td><span class="status-badge status-${b.status}">${b.status}</span></td>
+        <td>${b.status==='confirmed'?`<button class="btn-bk" style="padding:5px 12px;font-size:10px" onclick="cancelBooking('${b.booking_ref}')">Cancel</button>`:'—'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function cancelBooking(ref) {
+  if(!confirm('Are you sure you want to cancel booking '+ref+'?')) return;
+  const res = await api('POST',`/bookings/${ref}/cancel`);
+  if(res.error){ showToast('❌',res.error); return; }
+  showToast('✅','Booking cancelled successfully');
+  loadDashboard();
+}
+
+// ── AI CHAT ──
+async function sendChat() {
+  const inp = document.getElementById('chatInp');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+
+  const msgsEl = document.getElementById('chatMsgs');
+  const userEl = document.createElement('div');
+  userEl.className='msg user'; userEl.textContent=msg;
+  msgsEl.appendChild(userEl);
+
+  const typEl = document.createElement('div');
+  typEl.className='typing';
+  typEl.innerHTML='<span></span><span></span><span></span>';
+  msgsEl.appendChild(typEl);
+  msgsEl.scrollTop=msgsEl.scrollHeight;
+
+  chatHistory.push({role:'user', content:msg});
+
+  const res = await api('POST','/ai/chat',{
+    message: msg, session_key: chatSessionKey, history: chatHistory.slice(-8)
+  });
+
+  msgsEl.removeChild(typEl);
+  const reply = res.data?.reply || res.error || 'Sorry, I encountered an error. Please try again.';
+
+  const aiEl = document.createElement('div');
+  aiEl.className='msg ai'; aiEl.textContent=reply;
+  msgsEl.appendChild(aiEl);
+  msgsEl.scrollTop=msgsEl.scrollHeight;
+
+  chatHistory.push({role:'assistant', content:reply});
+}
+
+// ── TABS ──
+function setTab(btn) {
+  document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── DATE MIN ──
+const now=new Date(), pad=n=>String(n).padStart(2,'0');
+const minDt=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+document.querySelectorAll('input[type="datetime-local"]').forEach(e=>e.min=minDt);
+
+// ── MAP city dots ──
+const majors=[
+  {n:'Mumbai',lat:19.076,lng:72.877},{n:'Delhi',lat:28.6139,lng:77.209},
+  {n:'Bengaluru',lat:12.9716,lng:77.5946},{n:'Chennai',lat:13.0827,lng:80.2707},
+  {n:'Hyderabad',lat:17.385,lng:78.4867},{n:'Kolkata',lat:22.5726,lng:88.3639},
+  {n:'Jaipur',lat:26.9124,lng:75.7873},{n:'Ahmedabad',lat:23.0225,lng:72.5714},
+  {n:'Pune',lat:18.5204,lng:73.8567},{n:'Goa',lat:15.2993,lng:74.124},
+];
+majors.forEach(c=>{
+  const icon=L.divIcon({html:`<div style="width:7px;height:7px;background:#C9A84C;border-radius:50%;box-shadow:0 0 6px rgba(201,168,76,.6)"></div>`,iconAnchor:[3.5,3.5]});
+  L.marker([c.lat,c.lng],{icon}).addTo(map).bindTooltip(c.n,{direction:'top',permanent:false});
+});
+
+// ── INIT ──
+loadVehicles();
+loadNews();
+updateNavAuth();
+if(TOKEN) loadDashboard();
+</script>
+
+<style>
+.leaflet-tooltip{background:var(--dark2);border:1px solid var(--gold);color:var(--text);font-family:'DM Sans';font-size:11px;padding:4px 8px}
+.leaflet-tooltip::before{border-top-color:var(--gold)!important}
+</style>
+</body>
+</html>
